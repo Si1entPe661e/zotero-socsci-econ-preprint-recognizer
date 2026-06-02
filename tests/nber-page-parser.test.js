@@ -16,3 +16,26 @@ test("parses NBER citation metadata from HTML", () => {
   assert.equal(metadata.abstractNote, "This paper studies a synthetic NBER-style abstract.");
   assert.equal(metadata.workingPaperNumber, "12345");
 });
+
+test("parses citation metadata when meta content appears before name", () => {
+  const html = `
+    <meta content="Reversed Metadata Order" name="citation_title">
+    <meta content="Jane Doe" name="citation_author">
+    <meta content="John Smith" name="citation_author">
+  `;
+  const metadata = parseNberPage(html, "w12345");
+
+  assert.equal(metadata.title, "Reversed Metadata Order");
+  assert.deepEqual(metadata.authors, ["Jane Doe", "John Smith"]);
+});
+
+test("parses apostrophes inside double-quoted meta content values", () => {
+  const html = `
+    <meta name="citation_author" content="Jane O'Brien">
+    <meta name="citation_title" content="Apostrophes in Names">
+  `;
+  const metadata = parseNberPage(html, "w12345");
+
+  assert.deepEqual(metadata.authors, ["Jane O'Brien"]);
+  assert.equal(metadata.title, "Apostrophes in Names");
+});

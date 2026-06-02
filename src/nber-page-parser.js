@@ -20,9 +20,20 @@
   }
 
   function metaAll(html, name) {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`<meta\\s+[^>]*(?:name|property)=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`, "gi");
-    return [...html.matchAll(pattern)].map((match) => clean(match[1])).filter(Boolean);
+    const wanted = String(name || "").toLowerCase();
+    const metaPattern = /<meta\b(?:"[^"]*"|'[^']*'|[^'">])*>/gi;
+    const attrPattern = /([\w:-]+)\s*=\s*(["'])(.*?)\2/g;
+
+    return [...String(html || "").matchAll(metaPattern)]
+      .map((metaMatch) => {
+        const attrs = {};
+        for (const attrMatch of metaMatch[0].matchAll(attrPattern)) {
+          attrs[attrMatch[1].toLowerCase()] = attrMatch[3];
+        }
+        if (attrs.name !== wanted && attrs.property !== wanted) return "";
+        return clean(attrs.content);
+      })
+      .filter(Boolean);
   }
 
   function metaOne(html, name) {
