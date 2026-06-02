@@ -86,3 +86,31 @@ test("recognizer extracts ID from attachment text when filename has no ID", asyn
     ["write", 8, "Synthetic Text Fallback Paper"]
   ]);
 });
+
+test("default text extractor returns empty text when OS.File is unavailable", async () => {
+  const previousZotero = globalThis.Zotero;
+  const previousOS = globalThis.OS;
+  globalThis.Zotero = {
+    Fulltext: {
+      getItemCacheFile: async () => ({ path: "/tmp/missing-cache.txt" })
+    }
+  };
+  delete globalThis.OS;
+
+  try {
+    const recognizer = new Recognizer({});
+    const text = await recognizer.defaultExtractAttachmentText({ id: 9 });
+    assert.equal(text, "");
+  } finally {
+    if (previousZotero === undefined) {
+      delete globalThis.Zotero;
+    } else {
+      globalThis.Zotero = previousZotero;
+    }
+    if (previousOS === undefined) {
+      delete globalThis.OS;
+    } else {
+      globalThis.OS = previousOS;
+    }
+  }
+});

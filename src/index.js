@@ -32,6 +32,9 @@
       if (!globalThis.Zotero || !Zotero.Fulltext || !Zotero.Fulltext.getItemCacheFile) {
         return "";
       }
+      if (!globalThis.OS || !OS.File || !OS.File.exists || !OS.File.read) {
+        return "";
+      }
       const cacheFile = await Zotero.Fulltext.getItemCacheFile(attachment);
       if (!cacheFile || !(await OS.File.exists(cacheFile.path))) {
         return "";
