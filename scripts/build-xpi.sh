@@ -14,5 +14,5 @@ rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
 cd "$ROOT_DIR"
-zip -r "$XPI_PATH" manifest.json bootstrap.js src >/dev/null
+zip -r "$XPI_PATH" manifest.json bootstrap.js src assets >/dev/null
 echo "$XPI_PATH"

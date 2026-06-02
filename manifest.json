@@ -5,6 +5,10 @@
   "description": "Recognize NBER Working Paper PDFs and create Zotero preprint items.",
   "author": "Zhicheng",
   "homepage_url": "https://www.nber.org/",
+  "icons": {
+    "48": "assets/icon.svg",
+    "96": "assets/icon.svg"
+  },
   "applications": {
     "zotero": {
       "id": "nber-zotero-plugin@example.com",
