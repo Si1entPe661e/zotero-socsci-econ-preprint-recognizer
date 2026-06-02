@@ -18,8 +18,7 @@ Expected:
 
 Supported Zotero versions:
 
-- Zotero 7.x
-- Zotero 8.0 beta/stable builds, including `8.0-beta.8`
+- Zotero 7 or newer
 
 1. Open Zotero.
 2. Open Tools > Add-ons.
