@@ -55,6 +55,8 @@ function createElement(document, tagName) {
 }
 
 function createFakeUI(selectedItems = []) {
+  const alerts = [];
+  const progressWindows = [];
   const document = {
     elements: new Map(),
     getElementById(id) {
@@ -79,7 +81,31 @@ function createFakeUI(selectedItems = []) {
       }
     },
     Zotero: {
-      alert() {}
+      alert(...args) {
+        alerts.push(args);
+      },
+      ProgressWindow: class {
+        constructor() {
+          this.lines = [];
+          progressWindows.push(this);
+        }
+
+        changeHeadline(text) {
+          this.headline = text;
+        }
+
+        addDescription(text) {
+          this.description = text;
+        }
+
+        show() {
+          this.shown = true;
+        }
+
+        startCloseTimer(delay) {
+          this.closeDelay = delay;
+        }
+      }
     }
   };
 
@@ -93,6 +119,8 @@ function createFakeUI(selectedItems = []) {
     window,
     document,
     popup,
+    alerts,
+    progressWindows,
     ui: new ContextMenuUI(window, recognizer),
     setSelectedItems(items) {
       selectedItems = items;
@@ -189,4 +217,16 @@ test("shutdown removes menu item", () => {
   assert.equal(document.getElementById(MENU_ID), null);
   assert.equal(menuItem.parentNode, null);
   assert.deepEqual(popup.children, []);
+});
+
+test("successful recognition uses Zotero progress window instead of alert", async () => {
+  const { alerts, progressWindows, ui } = createFakeUI([pdfAttachment(42)]);
+
+  await ui.recognizeSelected();
+
+  assert.deepEqual(alerts, []);
+  assert.equal(progressWindows.length, 1);
+  assert.equal(progressWindows[0].headline, "NBER Zotero Plugin");
+  assert.match(progressWindows[0].description, /Created NBER preprint item 42/);
+  assert.equal(progressWindows[0].shown, true);
 });

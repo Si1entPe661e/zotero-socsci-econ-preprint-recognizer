@@ -78,10 +78,22 @@
       try {
         const attachment = this.getSelectedAttachment();
         const item = await this.recognizer.recognizeAttachment(attachment);
-        this.window.Zotero.alert(null, "NBER Zotero Plugin", `Created NBER preprint item ${item.id}.`);
+        this.showNotification("NBER Zotero Plugin", `Created NBER preprint item ${item.id}.`);
       } catch (error) {
         this.window.Zotero.alert(null, "NBER Zotero Plugin", error.message);
       }
+    }
+
+    showNotification(title, message) {
+      if (this.window.Zotero && this.window.Zotero.ProgressWindow) {
+        const progressWindow = new this.window.Zotero.ProgressWindow();
+        progressWindow.changeHeadline(title);
+        progressWindow.addDescription(message);
+        progressWindow.show();
+        progressWindow.startCloseTimer(4000);
+        return;
+      }
+      this.window.Zotero.alert(null, title, message);
     }
   }
 
