@@ -1,7 +1,16 @@
 var NBERZoteroPlugin;
 
+function load(rootURI, path) {
+  Services.scriptloader.loadSubScript(rootURI + path);
+}
+
 function startup(data, reason) {
-  Services.scriptloader.loadSubScript(data.rootURI + "src/index.js");
+  load(data.rootURI, "src/nber-id.js");
+  load(data.rootURI, "src/nber-page-parser.js");
+  load(data.rootURI, "src/nber-metadata.js");
+  load(data.rootURI, "src/zotero-item-writer.js");
+  load(data.rootURI, "src/ui.js");
+  load(data.rootURI, "src/index.js");
   NBERZoteroPlugin = new NBERZotero.Plugin(data);
   NBERZoteroPlugin.startup();
 }
