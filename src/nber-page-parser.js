@@ -61,6 +61,20 @@
     return idMatch ? idMatch[1] : "";
   }
 
+  function textContent(html) {
+    return clean(String(html || "").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "));
+  }
+
+  function extractBodyAbstract(html) {
+    const text = textContent(html);
+    const match = text.match(/Issue Date\s+(?:[A-Za-z]+\s+\d{4}|\d{4}(?:-\d{2})?)\s+([\s\S]+?)(?:\s+Acknowledgements and Disclosures|\s+Download Citation|\s+Related|\s+Program\(s\)|\s+Topic\(s\)|$)/i);
+    return match ? clean(match[1]) : "";
+  }
+
+  function extractAbstract(html) {
+    return textFromClass(html, "abstract") || extractBodyAbstract(html) || metaOne(html, "description");
+  }
+
   function splitName(fullName) {
     const parts = clean(fullName).split(" ").filter(Boolean);
     if (parts.length === 0) return { creatorType: "author", firstName: "", lastName: "" };
@@ -85,7 +99,7 @@
       date: metaOne(html, "citation_publication_date"),
       doi,
       url,
-      abstractNote: metaOne(html, "description") || textFromClass(html, "abstract"),
+      abstractNote: extractAbstract(html),
       workingPaperNumber: extractWorkingPaperNumber(html, normalizedId)
     };
   }
@@ -114,6 +128,7 @@
   return {
     parseNberPage,
     mapMetadataToPreprintPayload,
+    extractAbstract,
     splitName
   };
 });

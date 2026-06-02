@@ -50,3 +50,21 @@ test("parses meta names case-insensitively", () => {
   assert.deepEqual(metadata.authors, ["Jane Doe"]);
   assert.equal(metadata.url, "https://www.nber.org/papers/w12345");
 });
+
+test("prefers paper body abstract over generic meta description", () => {
+  const html = `
+    <meta name="citation_title" content="Paper With Body Abstract">
+    <meta name="description" content="Founded in 1920, the NBER is a private, non-profit organization.">
+    <div>
+      Issue Date July 2026
+      This is the actual NBER working paper abstract. It describes the paper, not the site.
+      Acknowledgements and Disclosures
+    </div>
+  `;
+  const metadata = parseNberPage(html, "w12345");
+
+  assert.equal(
+    metadata.abstractNote,
+    "This is the actual NBER working paper abstract. It describes the paper, not the site."
+  );
+});

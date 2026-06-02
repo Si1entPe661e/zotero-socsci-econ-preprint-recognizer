@@ -28,18 +28,23 @@
       return attachment.attachmentFilename || "";
     }
 
+    async readTextFile(path) {
+      if (!path) return "";
+      if (globalThis.IOUtils && IOUtils.exists && IOUtils.readUTF8) {
+        return (await IOUtils.exists(path)) ? IOUtils.readUTF8(path) : "";
+      }
+      if (globalThis.OS && OS.File && OS.File.exists && OS.File.read) {
+        return (await OS.File.exists(path)) ? OS.File.read(path, { encoding: "utf-8" }) : "";
+      }
+      return "";
+    }
+
     async defaultExtractAttachmentText(attachment) {
       if (!globalThis.Zotero || !Zotero.Fulltext || !Zotero.Fulltext.getItemCacheFile) {
         return "";
       }
-      if (!globalThis.OS || !OS.File || !OS.File.exists || !OS.File.read) {
-        return "";
-      }
       const cacheFile = await Zotero.Fulltext.getItemCacheFile(attachment);
-      if (!cacheFile || !(await OS.File.exists(cacheFile.path))) {
-        return "";
-      }
-      return OS.File.read(cacheFile.path, { encoding: "utf-8" });
+      return this.readTextFile(cacheFile && cacheFile.path);
     }
 
     async recognizeAttachment(attachment) {
@@ -63,33 +68,57 @@
   }
 
   class Plugin {
-    constructor(data) {
+    constructor(data, options = {}) {
       this.data = data;
-      this.recognizer = new Recognizer();
-      this.ui = null;
+      this.recognizer = options.recognizer || new Recognizer();
+      this.uiModule = options.uiModule || uiModule;
+      this.windowProvider = options.windowProvider || (() => {
+        if (globalThis.Zotero && Zotero.getMainWindows) {
+          return Zotero.getMainWindows();
+        }
+        return [];
+      });
+      this.uis = new Map();
     }
 
-    startup() {}
+    startup() {
+      this.addToAllWindows();
+    }
+
+    addToAllWindows() {
+      for (const window of this.windowProvider()) {
+        this.addToWindow(window);
+      }
+    }
+
+    addToWindow(window) {
+      if (!this.uiModule.ContextMenuUI || !window || this.uis.has(window)) {
+        return;
+      }
+      const ui = new this.uiModule.ContextMenuUI(window, this.recognizer);
+      ui.startup();
+      this.uis.set(window, ui);
+    }
+
+    removeFromWindow(window) {
+      const ui = this.uis.get(window);
+      if (!ui) return;
+      ui.shutdown();
+      this.uis.delete(window);
+    }
 
     shutdown() {
-      if (this.ui) {
-        this.ui.shutdown();
-        this.ui = null;
+      for (const window of this.uis.keys()) {
+        this.removeFromWindow(window);
       }
     }
 
     onMainWindowLoad(window) {
-      if (uiModule.ContextMenuUI) {
-        this.ui = new uiModule.ContextMenuUI(window, this.recognizer);
-        this.ui.startup();
-      }
+      this.addToWindow(window);
     }
 
     onMainWindowUnload(window) {
-      if (this.ui) {
-        this.ui.shutdown();
-        this.ui = null;
-      }
+      this.removeFromWindow(window);
     }
   }
 

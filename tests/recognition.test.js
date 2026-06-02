@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { Recognizer } = require("../src/index");
+const { Plugin, Recognizer } = require("../src/index");
 
 test("recognizer extracts ID from attachment filename and creates item", async () => {
   const calls = [];
@@ -113,4 +113,75 @@ test("default text extractor returns empty text when OS.File is unavailable", as
       globalThis.OS = previousOS;
     }
   }
+});
+
+test("default text extractor reads indexed text with IOUtils when OS.File is unavailable", async () => {
+  const previousZotero = globalThis.Zotero;
+  const previousOS = globalThis.OS;
+  const previousIOUtils = globalThis.IOUtils;
+  globalThis.Zotero = {
+    Fulltext: {
+      getItemCacheFile: async () => ({ path: "/tmp/nber-cache.txt" })
+    }
+  };
+  delete globalThis.OS;
+  globalThis.IOUtils = {
+    exists: async (path) => path === "/tmp/nber-cache.txt",
+    readUTF8: async (path) => `cached text from ${path} 10.3386/w54321`
+  };
+
+  try {
+    const recognizer = new Recognizer({});
+    const text = await recognizer.defaultExtractAttachmentText({ id: 10 });
+    assert.equal(text, "cached text from /tmp/nber-cache.txt 10.3386/w54321");
+  } finally {
+    if (previousZotero === undefined) {
+      delete globalThis.Zotero;
+    } else {
+      globalThis.Zotero = previousZotero;
+    }
+    if (previousOS === undefined) {
+      delete globalThis.OS;
+    } else {
+      globalThis.OS = previousOS;
+    }
+    if (previousIOUtils === undefined) {
+      delete globalThis.IOUtils;
+    } else {
+      globalThis.IOUtils = previousIOUtils;
+    }
+  }
+});
+
+test("plugin startup registers UI for already-open main windows", () => {
+  const calls = [];
+  class FakeContextMenuUI {
+    constructor(window, recognizer) {
+      this.window = window;
+      this.recognizer = recognizer;
+    }
+
+    startup() {
+      calls.push(["startup", this.window.id]);
+    }
+
+    shutdown() {
+      calls.push(["shutdown", this.window.id]);
+    }
+  }
+
+  const plugin = new Plugin({}, {
+    uiModule: { ContextMenuUI: FakeContextMenuUI },
+    windowProvider: () => [{ id: "main-1" }, { id: "main-2" }]
+  });
+
+  plugin.startup();
+  plugin.shutdown();
+
+  assert.deepEqual(calls, [
+    ["startup", "main-1"],
+    ["startup", "main-2"],
+    ["shutdown", "main-1"],
+    ["shutdown", "main-2"]
+  ]);
 });
