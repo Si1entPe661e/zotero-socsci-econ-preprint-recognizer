@@ -82,16 +82,26 @@
       return Boolean(item && item.attachmentContentType === "application/pdf");
     }
 
-    isSinglePdfSelection() {
+    isRegularItemWithAttachments(item) {
+      if (!item || !item.getAttachments) return false;
+      if (item.isRegularItem && !item.isRegularItem()) return false;
+      return item.getAttachments().length > 0;
+    }
+
+    isRecognizableSelection(item) {
+      return this.isPdfAttachment(item) || this.isRegularItemWithAttachments(item);
+    }
+
+    isSingleRecognizableSelection() {
       const pane = this.window.ZoteroPane;
       const selectedItems = pane && pane.getSelectedItems ? pane.getSelectedItems() : [];
-      return selectedItems.length === 1 && this.isPdfAttachment(selectedItems[0]);
+      return selectedItems.length === 1 && this.isRecognizableSelection(selectedItems[0]);
     }
 
     updateMenuVisibility() {
       if (!this.menuItem) return;
 
-      const shouldShow = this.isSinglePdfSelection();
+      const shouldShow = this.isSingleRecognizableSelection();
       this.menuItem.hidden = !shouldShow;
       this.menuItem.disabled = !shouldShow;
     }
@@ -104,8 +114,10 @@
 
     async recognizeSelected() {
       try {
-        const attachment = this.getSelectedAttachment();
-        const item = await this.recognizer.recognizeAttachment(attachment);
+        const selectedItem = this.getSelectedAttachment();
+        const item = this.isPdfAttachment(selectedItem)
+          ? await this.recognizer.recognizeAttachment(selectedItem)
+          : await this.recognizer.recognizeItem(selectedItem);
         this.showNotification(this.strings.title, this.strings.success(item.id));
       } catch (error) {
         this.window.Zotero.alert(null, this.strings.title, error.message);

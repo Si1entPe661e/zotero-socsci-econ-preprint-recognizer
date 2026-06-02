@@ -16,6 +16,8 @@
     constructor(options = {}) {
       this.fetchMetadata = options.fetchMetadata || metadataService.fetchNberMetadata;
       this.writeItem = options.writeItem || ((attachment, payload) => writer.createPreprintAndAttachPdf(Zotero, attachment, payload));
+      this.updateItem = options.updateItem || ((item, payload) => writer.updateItemFromPayload(item, payload));
+      this.getItemByID = options.getItemByID || ((id) => Zotero.Items.get(id));
       this.extractAttachmentText = options.extractAttachmentText || this.defaultExtractAttachmentText;
     }
 
@@ -64,6 +66,34 @@
       const metadata = await this.fetchMetadata(id);
       const payload = parser.mapMetadataToPreprintPayload(metadata);
       return this.writeItem(attachment, payload);
+    }
+
+    getPdfAttachmentsForItem(item) {
+      if (!item || !item.getAttachments) return [];
+      return item.getAttachments()
+        .map((id) => this.getItemByID(id))
+        .filter((attachment) => this.isPdfAttachment(attachment));
+    }
+
+    async recognizeItem(item) {
+      const attachments = this.getPdfAttachmentsForItem(item);
+      if (attachments.length === 0) {
+        throw new Error("Selected item does not have a PDF attachment");
+      }
+
+      const attachment = attachments[0];
+      let id = idTools.extractNberId(this.getAttachmentFilename(attachment));
+      if (!id) {
+        const attachmentText = await this.extractAttachmentText(attachment);
+        id = idTools.extractNberId(attachmentText);
+      }
+      if (!id) {
+        throw new Error("Could not find an NBER Working Paper ID in the child PDF file name or indexed PDF text");
+      }
+
+      const metadata = await this.fetchMetadata(id);
+      const payload = parser.mapMetadataToPreprintPayload(metadata);
+      return this.updateItem(item, payload);
     }
   }
 

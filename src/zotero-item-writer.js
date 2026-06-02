@@ -27,8 +27,17 @@
     return item;
   }
 
+  async function updateItemFromPayload(item, payload) {
+    item.itemType = payload.itemType;
+    applyFields(item, payload.fields);
+    item.setCreators(payload.creators || []);
+    await item.saveTx();
+    return item;
+  }
+
   return {
     applyFields,
-    createPreprintAndAttachPdf
+    createPreprintAndAttachPdf,
+    updateItemFromPayload
   };
 });

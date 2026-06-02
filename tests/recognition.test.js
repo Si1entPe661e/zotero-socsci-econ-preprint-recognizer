@@ -185,3 +185,48 @@ test("plugin startup registers UI for already-open main windows", () => {
     ["shutdown", "main-2"]
   ]);
 });
+
+test("recognizer updates a regular item from its PDF child attachment", async () => {
+  const calls = [];
+  const childAttachment = {
+    id: 77,
+    attachmentContentType: "application/pdf",
+    getFilename() {
+      return "w30277.pdf";
+    }
+  };
+  const item = {
+    id: 70,
+    itemType: "journalArticle",
+    libraryID: 1,
+    getAttachments() {
+      return [77];
+    }
+  };
+
+  const recognizer = new Recognizer({
+    getItemByID: (id) => (id === 77 ? childAttachment : null),
+    fetchMetadata: async (id) => {
+      calls.push(["fetch", id]);
+      return {
+        id,
+        title: "Correct NBER Paper Title",
+        authors: ["Jane Doe"],
+        doi: "10.3386/w30277",
+        url: "https://www.nber.org/papers/w30277"
+      };
+    },
+    updateItem: async (selectedItem, payload) => {
+      calls.push(["update", selectedItem.id, payload.fields.title]);
+      return selectedItem;
+    }
+  });
+
+  const updatedItem = await recognizer.recognizeItem(item);
+
+  assert.equal(updatedItem, item);
+  assert.deepEqual(calls, [
+    ["fetch", "w30277"],
+    ["update", 70, "Correct NBER Paper Title"]
+  ]);
+});

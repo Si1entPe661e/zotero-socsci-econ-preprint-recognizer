@@ -138,7 +138,15 @@ function nonPdfAttachment() {
 }
 
 function regularItem() {
-  return { id: 3 };
+  return {
+    id: 3,
+    isRegularItem() {
+      return true;
+    },
+    getAttachments() {
+      return [4];
+    }
+  };
 }
 
 test("startup appends a menu item with MENU_ID and MENU_LABEL", () => {
@@ -175,15 +183,15 @@ test("single selected non-PDF attachment hides and disables menu item", () => {
   assert.equal(menuItem.disabled, true);
 });
 
-test("single selected regular item hides and disables menu item", () => {
+test("single selected regular item with attachments shows and enables menu item", () => {
   const { document, popup, ui } = createFakeUI([regularItem()]);
 
   ui.startup();
   popup.dispatchEvent("popupshowing");
 
   const menuItem = document.getElementById(MENU_ID);
-  assert.equal(menuItem.hidden, true);
-  assert.equal(menuItem.disabled, true);
+  assert.equal(menuItem.hidden, false);
+  assert.equal(menuItem.disabled, false);
 });
 
 test("multiple selections hide and disable menu item", () => {
@@ -230,6 +238,25 @@ test("successful recognition uses Zotero progress window instead of alert", asyn
   assert.equal(progressWindows[0].headline, "NBER Zotero Plugin");
   assert.match(progressWindows[0].description, /Created NBER preprint item 42/);
   assert.equal(progressWindows[0].shown, true);
+});
+
+test("regular item recognition calls recognizer recognizeItem", async () => {
+  const calls = [];
+  const { progressWindows, ui } = createFakeUI([regularItem()]);
+  ui.recognizer = {
+    async recognizeAttachment() {
+      throw new Error("wrong path");
+    },
+    async recognizeItem(item) {
+      calls.push(item.id);
+      return { id: item.id };
+    }
+  };
+
+  await ui.recognizeSelected();
+
+  assert.deepEqual(calls, [3]);
+  assert.match(progressWindows[0].description, /3/);
 });
 
 test("uses Simplified Chinese labels for zh-CN locale", async () => {
