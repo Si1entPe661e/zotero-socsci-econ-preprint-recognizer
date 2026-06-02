@@ -39,3 +39,14 @@ test("parses apostrophes inside double-quoted meta content values", () => {
   assert.deepEqual(metadata.authors, ["Jane O'Brien"]);
   assert.equal(metadata.title, "Apostrophes in Names");
 });
+
+test("parses meta names case-insensitively", () => {
+  const html = `
+    <meta name="CITATION_AUTHOR" content="Jane Doe">
+    <meta property="OG:URL" content="https://www.nber.org/papers/w12345">
+  `;
+  const metadata = parseNberPage(html, "w12345");
+
+  assert.deepEqual(metadata.authors, ["Jane Doe"]);
+  assert.equal(metadata.url, "https://www.nber.org/papers/w12345");
+});

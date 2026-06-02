@@ -30,7 +30,9 @@
         for (const attrMatch of metaMatch[0].matchAll(attrPattern)) {
           attrs[attrMatch[1].toLowerCase()] = attrMatch[3];
         }
-        if (attrs.name !== wanted && attrs.property !== wanted) return "";
+        const attrName = attrs.name ? attrs.name.toLowerCase() : "";
+        const attrProperty = attrs.property ? attrs.property.toLowerCase() : "";
+        if (attrName !== wanted && attrProperty !== wanted) return "";
         return clean(attrs.content);
       })
       .filter(Boolean);
