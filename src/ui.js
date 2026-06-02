@@ -8,6 +8,33 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   const MENU_ID = "nber-zotero-recognize-pdf";
   const MENU_LABEL = "Recognize NBER Working Paper";
+  const STRINGS = {
+    en: {
+      menuLabel: "Recognize NBER Working Paper",
+      title: "NBER Zotero Plugin",
+      success: (id) => `Created NBER preprint item ${id}.`
+    },
+    "zh-CN": {
+      menuLabel: "识别 NBER 工作论文",
+      title: "NBER Zotero 插件",
+      success: (id) => `已创建 NBER 预印本条目 ${id}。`
+    },
+    "zh-TW": {
+      menuLabel: "識別 NBER 工作論文",
+      title: "NBER Zotero 外掛",
+      success: (id) => `已建立 NBER 預印本條目 ${id}。`
+    },
+    fr: {
+      menuLabel: "Reconnaître le document de travail NBER",
+      title: "Extension Zotero NBER",
+      success: (id) => `Élément de prépublication NBER créé ${id}.`
+    },
+    es: {
+      menuLabel: "Reconocer documento de trabajo de NBER",
+      title: "Plugin Zotero NBER",
+      success: (id) => `Elemento de preprint NBER creado ${id}.`
+    }
+  };
 
   class ContextMenuUI {
     constructor(window, recognizer) {
@@ -17,6 +44,7 @@
       this.menuItem = null;
       this.popup = null;
       this.onPopupShowing = null;
+      this.strings = this.getStrings();
     }
 
     startup() {
@@ -27,7 +55,7 @@
         ? this.document.createXULElement("menuitem")
         : this.document.createElement("menuitem");
       menuItem.id = MENU_ID;
-      menuItem.setAttribute("label", MENU_LABEL);
+      menuItem.setAttribute("label", this.strings.menuLabel);
       menuItem.addEventListener("command", () => this.recognizeSelected());
 
       popup.appendChild(menuItem);
@@ -78,10 +106,26 @@
       try {
         const attachment = this.getSelectedAttachment();
         const item = await this.recognizer.recognizeAttachment(attachment);
-        this.showNotification("NBER Zotero Plugin", `Created NBER preprint item ${item.id}.`);
+        this.showNotification(this.strings.title, this.strings.success(item.id));
       } catch (error) {
-        this.window.Zotero.alert(null, "NBER Zotero Plugin", error.message);
+        this.window.Zotero.alert(null, this.strings.title, error.message);
       }
+    }
+
+    getLocale() {
+      const zotero = this.window.Zotero || {};
+      if (zotero.locale) return zotero.locale;
+      if (zotero.getLocale) return zotero.getLocale();
+      return "en";
+    }
+
+    getStrings() {
+      const locale = this.getLocale();
+      if (/^zh[-_]CN/i.test(locale) || /^zh[-_]Hans/i.test(locale)) return STRINGS["zh-CN"];
+      if (/^zh[-_]TW/i.test(locale) || /^zh[-_]Hant/i.test(locale)) return STRINGS["zh-TW"];
+      if (/^fr/i.test(locale)) return STRINGS.fr;
+      if (/^es/i.test(locale)) return STRINGS.es;
+      return STRINGS.en;
     }
 
     showNotification(title, message) {
@@ -100,6 +144,7 @@
   return {
     ContextMenuUI,
     MENU_ID,
-    MENU_LABEL
+    MENU_LABEL,
+    STRINGS
   };
 });

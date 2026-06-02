@@ -54,7 +54,7 @@ function createElement(document, tagName) {
   return element;
 }
 
-function createFakeUI(selectedItems = []) {
+function createFakeUI(selectedItems = [], locale = "en-US") {
   const alerts = [];
   const progressWindows = [];
   const document = {
@@ -81,6 +81,7 @@ function createFakeUI(selectedItems = []) {
       }
     },
     Zotero: {
+      locale,
       alert(...args) {
         alerts.push(args);
       },
@@ -229,4 +230,31 @@ test("successful recognition uses Zotero progress window instead of alert", asyn
   assert.equal(progressWindows[0].headline, "NBER Zotero Plugin");
   assert.match(progressWindows[0].description, /Created NBER preprint item 42/);
   assert.equal(progressWindows[0].shown, true);
+});
+
+test("uses Simplified Chinese labels for zh-CN locale", async () => {
+  const { document, progressWindows, ui } = createFakeUI([pdfAttachment(43)], "zh-CN");
+
+  ui.startup();
+  await ui.recognizeSelected();
+
+  const menuItem = document.getElementById(MENU_ID);
+  assert.equal(menuItem.attributes.label, "识别 NBER 工作论文");
+  assert.equal(progressWindows[0].headline, "NBER Zotero 插件");
+  assert.match(progressWindows[0].description, /已创建 NBER 预印本条目 43/);
+});
+
+test("uses localized labels for supported non-English locales", () => {
+  const cases = [
+    ["zh-TW", "識別 NBER 工作論文"],
+    ["fr-FR", "Reconnaître le document de travail NBER"],
+    ["es-ES", "Reconocer documento de trabajo de NBER"],
+    ["de-DE", "Recognize NBER Working Paper"]
+  ];
+
+  for (const [locale, expectedLabel] of cases) {
+    const { document, ui } = createFakeUI([pdfAttachment()], locale);
+    ui.startup();
+    assert.equal(document.getElementById(MENU_ID).attributes.label, expectedLabel);
+  }
 });
