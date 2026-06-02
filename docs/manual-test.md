@@ -18,7 +18,7 @@ Expected:
 
 Supported Zotero versions:
 
-- Zotero 7 or newer
+- Zotero 7 through Zotero 10
 
 1. Open Zotero.
 2. Open Tools > Add-ons.
