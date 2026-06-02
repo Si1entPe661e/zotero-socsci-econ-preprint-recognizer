@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 
-test("manifest is valid Zotero 7 plugin metadata", () => {
+test("manifest is valid Zotero 7 and 8.0 plugin metadata", () => {
   const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
 
   assert.equal(manifest.manifest_version, 2);
@@ -10,6 +10,7 @@ test("manifest is valid Zotero 7 plugin metadata", () => {
   assert.equal(manifest.version, "0.1.0");
   assert.equal(manifest.bootstrap, true);
   assert.equal(manifest.applications.zotero.strict_min_version, "7.0");
+  assert.equal(manifest.applications.zotero.strict_max_version, "8.0.*");
   assert.match(manifest.applications.zotero.id, /^nber-zotero-plugin@/);
 });
 
