@@ -12,6 +12,7 @@ test("manifest is valid Zotero 7 through 10 plugin metadata", () => {
   assert.equal(manifest.applications.zotero.strict_min_version, "7.0");
   assert.equal(manifest.applications.zotero.strict_max_version, "10.0.*");
   assert.equal(manifest.applications.zotero.id, "nber-zotero-plugin@example.com");
+  assert.equal(manifest.applications.zotero.update_url, "https://example.com/nber-zotero-plugin/updates.json");
 });
 
 test("bootstrap file exports Zotero lifecycle hooks", () => {
