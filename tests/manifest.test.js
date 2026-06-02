@@ -8,10 +8,10 @@ test("manifest is valid Zotero 7 through 10 plugin metadata", () => {
   assert.equal(manifest.manifest_version, 2);
   assert.equal(manifest.name, "NBER Zotero Plugin");
   assert.equal(manifest.version, "0.1.0");
-  assert.equal(manifest.bootstrap, true);
+  assert.equal(Object.hasOwn(manifest, "bootstrap"), false);
   assert.equal(manifest.applications.zotero.strict_min_version, "7.0");
   assert.equal(manifest.applications.zotero.strict_max_version, "10.0.*");
-  assert.match(manifest.applications.zotero.id, /^nber-zotero-plugin@/);
+  assert.equal(manifest.applications.zotero.id, "nber-zotero-plugin@example.com");
 });
 
 test("bootstrap file exports Zotero lifecycle hooks", () => {
