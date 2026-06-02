@@ -16,6 +16,7 @@
     constructor(options = {}) {
       this.fetchMetadata = options.fetchMetadata || metadataService.fetchNberMetadata;
       this.writeItem = options.writeItem || ((attachment, payload) => writer.createPreprintAndAttachPdf(Zotero, attachment, payload));
+      this.extractAttachmentText = options.extractAttachmentText || this.defaultExtractAttachmentText;
     }
 
     isPdfAttachment(attachment) {
@@ -27,14 +28,29 @@
       return attachment.attachmentFilename || "";
     }
 
+    async defaultExtractAttachmentText(attachment) {
+      if (!globalThis.Zotero || !Zotero.Fulltext || !Zotero.Fulltext.getItemCacheFile) {
+        return "";
+      }
+      const cacheFile = await Zotero.Fulltext.getItemCacheFile(attachment);
+      if (!cacheFile || !(await OS.File.exists(cacheFile.path))) {
+        return "";
+      }
+      return OS.File.read(cacheFile.path, { encoding: "utf-8" });
+    }
+
     async recognizeAttachment(attachment) {
       if (!this.isPdfAttachment(attachment)) {
         throw new Error("Selected item is not a PDF attachment");
       }
 
-      const id = idTools.extractNberId(this.getAttachmentFilename(attachment));
+      let id = idTools.extractNberId(this.getAttachmentFilename(attachment));
       if (!id) {
-        throw new Error("Could not find an NBER Working Paper ID in the PDF file name");
+        const attachmentText = await this.extractAttachmentText(attachment);
+        id = idTools.extractNberId(attachmentText);
+      }
+      if (!id) {
+        throw new Error("Could not find an NBER Working Paper ID in the PDF file name or indexed PDF text");
       }
 
       const metadata = await this.fetchMetadata(id);

@@ -48,3 +48,41 @@ test("recognizer rejects non-PDF attachments", async () => {
     /Selected item is not a PDF attachment/
   );
 });
+
+test("recognizer extracts ID from attachment text when filename has no ID", async () => {
+  const calls = [];
+  const attachment = {
+    id: 8,
+    libraryID: 1,
+    attachmentContentType: "application/pdf",
+    getFilename() {
+      return "download.pdf";
+    }
+  };
+
+  const recognizer = new Recognizer({
+    extractAttachmentText: async () => "National Bureau of Economic Research 10.3386/w54321",
+    fetchMetadata: async (id) => {
+      calls.push(["fetch", id]);
+      return {
+        id,
+        title: "Synthetic Text Fallback Paper",
+        authors: ["Jane Doe"],
+        doi: "10.3386/w54321",
+        url: "https://www.nber.org/papers/w54321"
+      };
+    },
+    writeItem: async (selectedAttachment, payload) => {
+      calls.push(["write", selectedAttachment.id, payload.fields.title]);
+      return { id: 101 };
+    }
+  });
+
+  const item = await recognizer.recognizeAttachment(attachment);
+
+  assert.equal(item.id, 101);
+  assert.deepEqual(calls, [
+    ["fetch", "w54321"],
+    ["write", 8, "Synthetic Text Fallback Paper"]
+  ]);
+});
