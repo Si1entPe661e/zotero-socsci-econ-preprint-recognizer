@@ -11,7 +11,7 @@ SocSci/Econ Preprint Recognizer is a Zotero 7+ plugin for recognizing social sci
 
 ## Installation
 
-1. Download or build `dist/socsci-econ-preprint-recognizer.xpi`.
+1. Download `socsci-econ-preprint-recognizer.xpi` from the latest GitHub Release, or build `dist/socsci-econ-preprint-recognizer.xpi`.
 2. Open Zotero.
 3. Go to Tools > Add-ons.
 4. Choose Install Add-on From File.
@@ -43,10 +43,15 @@ npm run build
 
 `npm test` runs the unit tests. `npm run build` packages the plugin into `dist/socsci-econ-preprint-recognizer.xpi`.
 
+## Release Updates
+
+`manifest.json` points Zotero to `updates.json` in this repository. When publishing a new release, upload the XPI to GitHub Releases and add a matching entry to `updates.json` with the new version and release asset URL.
+
 ## Project Structure
 
 - `src/`: plugin logic, metadata fetching, parsing, Zotero item writing, and UI.
 - `tests/`: Node unit tests and HTML/JSON fixtures.
 - `assets/`: plugin icons.
 - `scripts/build-xpi.sh`: XPI packaging script.
+- `updates.json`: Zotero update manifest for GitHub Release assets.
 - `docs/manual-test.md`: manual Zotero test checklist.

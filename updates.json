@@ -1,0 +1,18 @@
+{
+  "addons": {
+    "zotero-socsci-econ-preprint-recognizer@si1entpe661e.github.io": {
+      "updates": [
+        {
+          "version": "0.1.0",
+          "update_link": "https://github.com/Si1entPe661e/zotero-socsci-econ-preprint-recognizer/releases/download/v0.1.0/socsci-econ-preprint-recognizer.xpi",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "7.0",
+              "strict_max_version": "10.0.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

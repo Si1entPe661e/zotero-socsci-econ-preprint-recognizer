@@ -2,12 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This repository is a Zotero 7+ plugin for recognizing NBER Working Paper PDFs. Core plugin code lives in `src/`: `index.js` wires plugin lifecycle and recognition flow, `nber-id.js` extracts paper IDs, `nber-metadata.js` fetches metadata, `nber-page-parser.js` maps NBER pages, `zotero-item-writer.js` writes Zotero items, and `ui.js` owns context-menu UI behavior. Root files `bootstrap.js` and `manifest.json` are Zotero extension entry points. Tests live in `tests/`, with fixtures in `tests/fixtures/`. Static assets are in `assets/`, build output goes to ignored `dist/`, and manual verification notes are in `docs/manual-test.md`.
+This repository is a Zotero 7+ plugin for recognizing social science and economics preprint PDFs, currently NBER Working Papers and SSRN papers. Core plugin code lives in `src/`: `index.js` wires plugin lifecycle and recognition flow, `nber-id.js` extracts preprint IDs, `nber-metadata.js` fetches metadata, `nber-page-parser.js` maps source pages, `zotero-item-writer.js` writes Zotero items, and `ui.js` owns context-menu UI behavior. Root files `bootstrap.js` and `manifest.json` are Zotero extension entry points. `updates.json` is the GitHub-hosted Zotero update manifest. Tests live in `tests/`, with fixtures in `tests/fixtures/`. Static assets are in `assets/`, build output goes to ignored `dist/`, and manual verification notes are in `docs/manual-test.md`.
 
 ## Build, Test, and Development Commands
 
 - `npm test`: runs all unit tests with Node's built-in `node:test` runner.
-- `npm run build`: packages `manifest.json`, `bootstrap.js`, `src/`, and `assets/` into `dist/nber-zotero-plugin.xpi`.
+- `npm run build`: packages `manifest.json`, `bootstrap.js`, `src/`, and `assets/` into `dist/socsci-econ-preprint-recognizer.xpi`.
 - `bash scripts/build-xpi.sh`: direct build script invocation; useful when debugging packaging.
 
 Run `npm test` before building, then install the generated XPI in Zotero via Tools > Add-ons > Install Add-on From File.
