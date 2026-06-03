@@ -9,3 +9,11 @@ test("plugin icon is an original SVG asset", () => {
   assert.match(icon, /NBER working paper recognition icon/);
   assert.doesNotMatch(icon, /copyright|trademark|logo/i);
 });
+
+test("context menu icon is a 16px PNG asset", () => {
+  const icon = fs.readFileSync("assets/icon-16.png");
+
+  assert.deepEqual([...icon.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.equal(icon.readUInt32BE(16), 16);
+  assert.equal(icon.readUInt32BE(20), 16);
+});

@@ -14,6 +14,22 @@
     }
   }
 
+  function getItemTypeID(itemType) {
+    if (globalThis.Zotero && Zotero.ItemTypes && Zotero.ItemTypes.getID) {
+      return Zotero.ItemTypes.getID(itemType) || itemType;
+    }
+    return itemType;
+  }
+
+  function setItemType(item, itemType) {
+    if (!itemType) return;
+    if (typeof item.setType === "function") {
+      item.setType(getItemTypeID(itemType));
+      return;
+    }
+    item.itemType = itemType;
+  }
+
   async function createPreprintAndAttachPdf(zotero, attachment, payload) {
     const item = new zotero.Item(payload.itemType);
     item.libraryID = attachment.libraryID;
@@ -28,7 +44,7 @@
   }
 
   async function updateItemFromPayload(item, payload) {
-    item.itemType = payload.itemType;
+    setItemType(item, payload.itemType);
     applyFields(item, payload.fields);
     item.setCreators(payload.creators || []);
     await item.saveTx();
@@ -38,6 +54,7 @@
   return {
     applyFields,
     createPreprintAndAttachPdf,
+    setItemType,
     updateItemFromPayload
   };
 });

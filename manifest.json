@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
-  "name": "NBER Zotero Plugin",
+  "name": "SocSci/Econ Preprint Recognizer",
   "version": "0.1.0",
-  "description": "Recognize NBER Working Paper PDFs and create Zotero preprint items.",
+  "description": "Recognize NBER and SSRN preprint PDFs and create Zotero preprint items.",
   "author": "Zhicheng",
-  "homepage_url": "https://www.nber.org/",
+  "homepage_url": "https://www.ssrn.com/",
   "icons": {
     "48": "assets/icon.svg",
     "96": "assets/icon.svg"

@@ -41,6 +41,84 @@ test("recognizer extracts ID from attachment filename and creates item", async (
   ]);
 });
 
+test("recognizer extracts SSRN ID from attachment filename and creates item", async () => {
+  const calls = [];
+  const attachment = {
+    id: 11,
+    libraryID: 1,
+    attachmentContentType: "application/pdf",
+    getFilename() {
+      return "SSRN-id-2997321.pdf";
+    }
+  };
+
+  const recognizer = new Recognizer({
+    fetchMetadata: async (id, source) => {
+      calls.push(["fetch", source, id]);
+      return {
+        source,
+        id,
+        title: "Experimental Evidence for a Link between Labor Market Competition and Anti-Immigrant Attitudes",
+        authors: ["Jonathan Mellon"],
+        doi: "10.2139/ssrn.2997321",
+        url: "https://ssrn.com/abstract=2997321",
+        repository: "SSRN"
+      };
+    },
+    writeItem: async (selectedAttachment, payload) => {
+      calls.push(["write", selectedAttachment.id, payload.fields.repository, payload.fields.title]);
+      return { id: 102 };
+    }
+  });
+
+  const item = await recognizer.recognizeAttachment(attachment);
+
+  assert.equal(item.id, 102);
+  assert.deepEqual(calls, [
+    ["fetch", "ssrn", "2997321"],
+    ["write", 11, "SSRN", "Experimental Evidence for a Link between Labor Market Competition and Anti-Immigrant Attitudes"]
+  ]);
+});
+
+test("recognizer extracts SSRN ID from attachment text", async () => {
+  const calls = [];
+  const attachment = {
+    id: 12,
+    libraryID: 1,
+    attachmentContentType: "application/pdf",
+    getFilename() {
+      return "download.pdf";
+    }
+  };
+
+  const recognizer = new Recognizer({
+    extractAttachmentText: async () => "Available at SSRN: https://ssrn.com/abstract=2997321",
+    fetchMetadata: async (id, source) => {
+      calls.push(["fetch", source, id]);
+      return {
+        source,
+        id,
+        title: "Synthetic SSRN Paper",
+        authors: ["Jane Doe"],
+        doi: "10.2139/ssrn.2997321",
+        url: "https://ssrn.com/abstract=2997321",
+        repository: "SSRN"
+      };
+    },
+    writeItem: async (selectedAttachment, payload) => {
+      calls.push(["write", selectedAttachment.id, payload.fields.repository]);
+      return { id: 103 };
+    }
+  });
+
+  await recognizer.recognizeAttachment(attachment);
+
+  assert.deepEqual(calls, [
+    ["fetch", "ssrn", "2997321"],
+    ["write", 12, "SSRN"]
+  ]);
+});
+
 test("recognizer rejects non-PDF attachments", async () => {
   const recognizer = new Recognizer({});
   await assert.rejects(

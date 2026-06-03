@@ -1,8 +1,8 @@
 {
-  "name": "nber-zotero-plugin",
+  "name": "socsci-econ-preprint-recognizer",
   "version": "0.1.0",
   "private": true,
-  "description": "Zotero 7 plugin for recognizing NBER Working Paper PDFs.",
+  "description": "Zotero 7 plugin for recognizing NBER and SSRN preprint PDFs.",
   "scripts": {
     "test": "node --test",
     "build": "bash scripts/build-xpi.sh"

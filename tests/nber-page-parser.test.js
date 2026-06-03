@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const { parseNberPage } = require("../src/nber-page-parser");
+const { mapMetadataToPreprintPayload, parseNberPage, parseSsrnPage } = require("../src/nber-page-parser");
 
 test("parses NBER citation metadata from HTML", () => {
   const html = fs.readFileSync("tests/fixtures/nber-w12345.html", "utf8");
@@ -67,4 +67,38 @@ test("prefers paper body abstract over generic meta description", () => {
     metadata.abstractNote,
     "This is the actual NBER working paper abstract. It describes the paper, not the site."
   );
+});
+
+test("parses SSRN citation metadata from HTML", () => {
+  const html = fs.readFileSync("tests/fixtures/ssrn-2997321.html", "utf8");
+  const metadata = parseSsrnPage(html, "2997321");
+
+  assert.equal(metadata.source, "ssrn");
+  assert.equal(metadata.id, "2997321");
+  assert.equal(metadata.title, "Experimental Evidence for a Link between Labor Market Competition and Anti-Immigrant Attitudes");
+  assert.deepEqual(metadata.authors, ["Jonathan Mellon"]);
+  assert.equal(metadata.date, "2019/03/22");
+  assert.equal(metadata.doi, "10.2139/ssrn.2997321");
+  assert.equal(metadata.url, "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2997321");
+  assert.equal(metadata.abstractNote, "Anti-immigrant sentiment has become central to politics in Western Democracies.");
+});
+
+test("maps SSRN metadata to a preprint payload", () => {
+  const payload = mapMetadataToPreprintPayload({
+    source: "ssrn",
+    id: "2997321",
+    title: "SSRN Paper",
+    authors: ["Jonathan Mellon"],
+    date: "2019/03/22",
+    doi: "10.2139/ssrn.2997321",
+    url: "https://ssrn.com/abstract=2997321",
+    abstractNote: "Synthetic SSRN abstract.",
+    repository: "SSRN"
+  });
+
+  assert.equal(payload.itemType, "preprint");
+  assert.equal(payload.fields.repository, "SSRN");
+  assert.equal(payload.fields.archive, "SSRN");
+  assert.match(payload.fields.extra, /SSRN Abstract ID: 2997321/);
+  assert.match(payload.fields.extra, /Source: SSRN/);
 });

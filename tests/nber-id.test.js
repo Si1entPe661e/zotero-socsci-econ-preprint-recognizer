@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { extractNberId, normalizeNberId } = require("../src/nber-id");
+const { extractNberId, extractPreprintIdentifier, extractSsrnId, normalizeNberId, normalizeSsrnId } = require("../src/nber-id");
 
 test("normalizes NBER IDs", () => {
   assert.equal(normalizeNberId("W34533"), "w34533");
@@ -26,4 +26,23 @@ test("extracts ID from NBER paper URLs", () => {
 test("returns null when no ID exists", () => {
   assert.equal(extractNberId("ordinary-paper.pdf"), null);
   assert.equal(normalizeNberId("abc"), null);
+});
+
+test("normalizes SSRN IDs", () => {
+  assert.equal(normalizeSsrnId("2997321"), "2997321");
+  assert.equal(normalizeSsrnId(" ssrn.2997321 "), "2997321");
+  assert.equal(normalizeSsrnId("abc"), null);
+});
+
+test("extracts SSRN IDs from DOI, URLs, and filenames", () => {
+  assert.equal(extractSsrnId("10.2139/ssrn.2997321"), "2997321");
+  assert.equal(extractSsrnId("https://ssrn.com/abstract=2997321"), "2997321");
+  assert.equal(extractSsrnId("papers.ssrn.com/sol3/papers.cfm?abstract_id=2997321"), "2997321");
+  assert.equal(extractSsrnId("SSRN-id-2997321.pdf"), "2997321");
+});
+
+test("extracts source-aware preprint identifiers", () => {
+  assert.deepEqual(extractPreprintIdentifier("NBER w34533.pdf"), { source: "nber", id: "w34533" });
+  assert.deepEqual(extractPreprintIdentifier("Available at SSRN: https://ssrn.com/abstract=2997321"), { source: "ssrn", id: "2997321" });
+  assert.equal(extractPreprintIdentifier("ordinary-paper.pdf"), null);
 });

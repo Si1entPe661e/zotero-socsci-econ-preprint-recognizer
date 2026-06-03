@@ -7,40 +7,43 @@
   }
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   const MENU_ID = "nber-zotero-recognize-pdf";
-  const MENU_LABEL = "Recognize NBER Working Paper";
+  const MENU_LABEL = "Recognize SocSci/Econ Preprint";
+  const ICON_PATH = "assets/icon-16.png";
+  const MENU_ICON_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAAAAAAAAPlDu38AAAAHdElNRQfqBgMFKzHHm/eyAAACrUlEQVQ4y32TS2xMURyHv/99TGfmzpiaMoa2KS36iFdUWsQ7JFLxiK5Yi414rOwsLCxshC1BEBHpjlSot1TEI6RptQ1KWqZtPIoZZu7MnXuPxVAt4pec1Tnny3dO/j+d8ZE/VzQ+XZTnSd7JCv+IVNQ2omkanuetsqzgdsMwLBSqsK3I2DamaeI4Tlc6nTmu6/rIQO+jUYABkBgcii5b0nB47+6dDSXRKEoV7iulOHXmAo2NDSTevfVOn73wQYSTYw2MnwfDkyaVxJcvXUwoZIFSIOB5ikutbVRWzaSsvEy7duNOeTweB4T+noe/AYKgANd1yefzo3SlwDQNzp07T9AKomt63eWLLb6K2prcOAMATeDz1xRtd5+QzeUKWIFQJMaaWbN5PzzI1attQ/DV4ecTxwGUgoC/iNrZ00ctBKF+XjWh4jDX79xFfMbnyoUr1Oun9/4GiAjpjE3H81dkszlEhEzeYcBn0/llmKH3H0ktn7veCfqvRTZWP1Api+SRo2MNFFYwQP38avJ5FxE4/uQ+ncND7Fu9lqmRYk533Ghs6W0/xZdIs/jy3X8ZfE9nePysh1zO4VM2TftwHwc2N9FUV8eInSI5oZ9pxZGaxIg0i6a6I/v3/AZ4SjExEmbrhpVoCE8TA7S2vqHzWzc3H9zGdh0qw6VUlddz7OWtCgMdEdAK86YQQNd1ggE/gUARlbEYRaZJnDIMTUcT2DJ1HR1vEyhUl8iYTxSRTDKZSr7se82vSRRgaayUE7fa2bRoATUhi0NX2rjX98IxdT0zrgv9Pb1SNXfOtimxyTt8PjMAhS44rkuf6WJXTBFCftvxvIe6SImINAH7gBYB0IwooMRD8yOa/otuGgalgTD2giq+z5/hZvyGbblYwEGgGNj1z4r+L5H9ewACQAj4+ANh1QlIYP+XQAAAADB0RVh0c3ZnOnRpdGxlACAgIE5CRVIgd29ya2luZyBwYXBlciByZWNvZ25pdGlvbiBpY29u9ga7JQAAAABJRU5ErkJggg==";
   const STRINGS = {
     en: {
-      menuLabel: "Recognize NBER Working Paper",
-      title: "NBER Zotero Plugin",
-      success: (id) => `Created NBER preprint item ${id}.`
+      menuLabel: "Recognize SocSci/Econ Preprint",
+      title: "SocSci/Econ Preprint Recognizer",
+      success: (id) => `Created preprint item ${id}.`
     },
     "zh-CN": {
-      menuLabel: "识别 NBER 工作论文",
-      title: "NBER Zotero 插件",
-      success: (id) => `已创建 NBER 预印本条目 ${id}。`
+      menuLabel: "识别SocSci/Econ预印本",
+      title: "SocSci/Econ Preprint Recognizer",
+      success: (id) => `已创建预印本条目 ${id}。`
     },
     "zh-TW": {
-      menuLabel: "識別 NBER 工作論文",
-      title: "NBER Zotero 外掛",
-      success: (id) => `已建立 NBER 預印本條目 ${id}。`
+      menuLabel: "識別SocSci/Econ預印本",
+      title: "SocSci/Econ Preprint Recognizer",
+      success: (id) => `已建立預印本條目 ${id}。`
     },
     fr: {
-      menuLabel: "Reconnaître le document de travail NBER",
-      title: "Extension Zotero NBER",
-      success: (id) => `Élément de prépublication NBER créé ${id}.`
+      menuLabel: "Reconnaître le preprint SocSci/Econ",
+      title: "SocSci/Econ Preprint Recognizer",
+      success: (id) => `Élément de prépublication créé ${id}.`
     },
     es: {
-      menuLabel: "Reconocer documento de trabajo de NBER",
-      title: "Plugin Zotero NBER",
-      success: (id) => `Elemento de preprint NBER creado ${id}.`
+      menuLabel: "Reconocer preprint SocSci/Econ",
+      title: "SocSci/Econ Preprint Recognizer",
+      success: (id) => `Elemento de preprint creado ${id}.`
     }
   };
 
   class ContextMenuUI {
-    constructor(window, recognizer) {
+    constructor(window, recognizer, options = {}) {
       this.window = window;
       this.document = window.document;
       this.recognizer = recognizer;
+      this.rootURI = options.rootURI || "";
       this.menuItem = null;
       this.popup = null;
       this.onPopupShowing = null;
@@ -49,13 +52,23 @@
 
     startup() {
       const popup = this.document.getElementById("zotero-itemmenu");
-      if (!popup || this.document.getElementById(MENU_ID)) return;
+      if (!popup) return;
+
+      const staleMenuItem = this.document.getElementById(MENU_ID);
+      if (staleMenuItem && staleMenuItem.parentNode) {
+        staleMenuItem.parentNode.removeChild(staleMenuItem);
+      }
 
       const menuItem = this.document.createXULElement
         ? this.document.createXULElement("menuitem")
         : this.document.createElement("menuitem");
       menuItem.id = MENU_ID;
       menuItem.setAttribute("label", this.strings.menuLabel);
+      menuItem.setAttribute("class", "menuitem-iconic");
+      menuItem.setAttribute("image", this.getIconURI());
+      menuItem.setAttribute("style", [
+        `list-style-image: url('${this.getIconURI()}');`
+      ].join(" "));
       menuItem.addEventListener("command", () => this.recognizeSelected());
 
       popup.appendChild(menuItem);
@@ -118,10 +131,23 @@
         const item = this.isPdfAttachment(selectedItem)
           ? await this.recognizer.recognizeAttachment(selectedItem)
           : await this.recognizer.recognizeItem(selectedItem);
+        this.refreshSelectedItemPane();
         this.showNotification(this.strings.title, this.strings.success(item.id));
       } catch (error) {
         this.window.Zotero.alert(null, this.strings.title, error.message);
       }
+    }
+
+    getIconURI() {
+      return MENU_ICON_DATA_URI;
+    }
+
+    refreshSelectedItemPane() {
+      const pane = this.window.ZoteroPane;
+      const itemPane = pane && pane.itemPane;
+      if (!pane || !itemPane || typeof itemPane.render !== "function") return;
+      itemPane.data = pane.getSelectedItems ? pane.getSelectedItems() : [];
+      itemPane.render();
     }
 
     getLocale() {
@@ -157,6 +183,8 @@
     ContextMenuUI,
     MENU_ID,
     MENU_LABEL,
+    ICON_PATH,
+    MENU_ICON_DATA_URI,
     STRINGS
   };
 });

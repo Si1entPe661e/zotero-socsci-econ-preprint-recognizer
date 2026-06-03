@@ -31,8 +31,47 @@
     return null;
   }
 
+  function normalizeSsrnId(value) {
+    if (!value) return null;
+    const trimmed = String(value).trim().toLowerCase();
+    const match = trimmed.match(/^(?:ssrn\.)?(\d{3,})$/);
+    return match ? match[1] : null;
+  }
+
+  function extractSsrnId(text) {
+    if (!text) return null;
+    const value = String(text);
+    const patterns = [
+      /10\.2139\/ssrn\.(\d{3,})/i,
+      /ssrn\.com\/abstract=(\d{3,})/i,
+      /papers\.ssrn\.com\/sol3\/papers\.cfm\?abstract_id=(\d{3,})/i,
+      /(?:^|[^a-z0-9])ssrn[-_. ]?id[-_. ]?(\d{3,})(?:[^a-z0-9]|$)/i,
+      /(?:^|[^a-z0-9])ssrn(?:\.|-|_| id-| id )(\d{3,})(?:[^a-z0-9]|$)/i
+    ];
+
+    for (const pattern of patterns) {
+      const match = value.match(pattern);
+      if (match) return normalizeSsrnId(match[1]);
+    }
+
+    return null;
+  }
+
+  function extractPreprintIdentifier(text) {
+    const nberId = extractNberId(text);
+    if (nberId) return { source: "nber", id: nberId };
+
+    const ssrnId = extractSsrnId(text);
+    if (ssrnId) return { source: "ssrn", id: ssrnId };
+
+    return null;
+  }
+
   return {
     extractNberId,
-    normalizeNberId
+    extractPreprintIdentifier,
+    extractSsrnId,
+    normalizeNberId,
+    normalizeSsrnId
   };
 });

@@ -1,0 +1,17 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message": {
+    "DOI": "10.2139/ssrn.5763222",
+    "title": ["The Economics of Synthetic SSRN Metadata"],
+    "author": [
+      { "given": "Jane", "family": "Doe" },
+      { "given": "John", "family": "Smith" }
+    ],
+    "published-online": {
+      "date-parts": [[2025, 6, 1]]
+    },
+    "abstract": "<jats:p>This paper uses synthetic Crossref metadata as an SSRN fallback fixture.</jats:p>",
+    "URL": "https://doi.org/10.2139/ssrn.5763222"
+  }
+}

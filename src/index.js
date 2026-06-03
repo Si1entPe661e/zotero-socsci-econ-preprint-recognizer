@@ -14,7 +14,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (idTools, metadataService, parser, writer, uiModule) {
   class Recognizer {
     constructor(options = {}) {
-      this.fetchMetadata = options.fetchMetadata || metadataService.fetchNberMetadata;
+      this.fetchMetadata = options.fetchMetadata || ((id, source) => metadataService.fetchPreprintMetadata({ id, source }));
       this.writeItem = options.writeItem || ((attachment, payload) => writer.createPreprintAndAttachPdf(Zotero, attachment, payload));
       this.updateItem = options.updateItem || ((item, payload) => writer.updateItemFromPayload(item, payload));
       this.getItemByID = options.getItemByID || ((id) => Zotero.Items.get(id));
@@ -54,16 +54,16 @@
         throw new Error("Selected item is not a PDF attachment");
       }
 
-      let id = idTools.extractNberId(this.getAttachmentFilename(attachment));
-      if (!id) {
+      let identifier = idTools.extractPreprintIdentifier(this.getAttachmentFilename(attachment));
+      if (!identifier) {
         const attachmentText = await this.extractAttachmentText(attachment);
-        id = idTools.extractNberId(attachmentText);
+        identifier = idTools.extractPreprintIdentifier(attachmentText);
       }
-      if (!id) {
-        throw new Error("Could not find an NBER Working Paper ID in the PDF file name or indexed PDF text");
+      if (!identifier) {
+        throw new Error("Could not find an NBER Working Paper ID or SSRN abstract ID in the PDF file name or indexed PDF text");
       }
 
-      const metadata = await this.fetchMetadata(id);
+      const metadata = await this.fetchMetadata(identifier.id, identifier.source);
       const payload = parser.mapMetadataToPreprintPayload(metadata);
       return this.writeItem(attachment, payload);
     }
@@ -82,16 +82,16 @@
       }
 
       const attachment = attachments[0];
-      let id = idTools.extractNberId(this.getAttachmentFilename(attachment));
-      if (!id) {
+      let identifier = idTools.extractPreprintIdentifier(this.getAttachmentFilename(attachment));
+      if (!identifier) {
         const attachmentText = await this.extractAttachmentText(attachment);
-        id = idTools.extractNberId(attachmentText);
+        identifier = idTools.extractPreprintIdentifier(attachmentText);
       }
-      if (!id) {
-        throw new Error("Could not find an NBER Working Paper ID in the child PDF file name or indexed PDF text");
+      if (!identifier) {
+        throw new Error("Could not find an NBER Working Paper ID or SSRN abstract ID in the child PDF file name or indexed PDF text");
       }
 
-      const metadata = await this.fetchMetadata(id);
+      const metadata = await this.fetchMetadata(identifier.id, identifier.source);
       const payload = parser.mapMetadataToPreprintPayload(metadata);
       return this.updateItem(item, payload);
     }
@@ -125,7 +125,7 @@
       if (!this.uiModule.ContextMenuUI || !window || this.uis.has(window)) {
         return;
       }
-      const ui = new this.uiModule.ContextMenuUI(window, this.recognizer);
+      const ui = new this.uiModule.ContextMenuUI(window, this.recognizer, { rootURI: this.data.rootURI || "" });
       ui.startup();
       this.uis.set(window, ui);
     }

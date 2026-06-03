@@ -57,6 +57,7 @@ function createElement(document, tagName) {
 function createFakeUI(selectedItems = [], locale = "en-US") {
   const alerts = [];
   const progressWindows = [];
+  const itemPaneRenders = [];
   const document = {
     elements: new Map(),
     getElementById(id) {
@@ -78,6 +79,12 @@ function createFakeUI(selectedItems = [], locale = "en-US") {
     ZoteroPane: {
       getSelectedItems() {
         return selectedItems;
+      },
+      itemPane: {
+        data: [],
+        render() {
+          itemPaneRenders.push(this.data.map((item) => item.id));
+        }
       }
     },
     Zotero: {
@@ -122,7 +129,8 @@ function createFakeUI(selectedItems = [], locale = "en-US") {
     popup,
     alerts,
     progressWindows,
-    ui: new ContextMenuUI(window, recognizer),
+    itemPaneRenders,
+    ui: new ContextMenuUI(window, recognizer, { rootURI: "resource://nber-zotero-plugin/" }),
     setSelectedItems(items) {
       selectedItems = items;
     }
@@ -159,6 +167,34 @@ test("startup appends a menu item with MENU_ID and MENU_LABEL", () => {
   assert.equal(menuItem.attributes.label, MENU_LABEL);
   assert.equal(menuItem.parentNode, popup);
   assert.deepEqual(popup.children, [menuItem]);
+});
+
+test("startup replaces stale menu item from previous plugin version", () => {
+  const { document, popup, ui } = createFakeUI([], "zh-CN");
+  const staleMenuItem = createElement(document, "menuitem");
+  staleMenuItem.id = MENU_ID;
+  staleMenuItem.setAttribute("label", "识别 NBER 工作论文");
+  popup.appendChild(staleMenuItem);
+
+  ui.startup();
+
+  const menuItem = document.getElementById(MENU_ID);
+  assert.notEqual(menuItem, staleMenuItem);
+  assert.equal(staleMenuItem.parentNode, null);
+  assert.equal(menuItem.attributes.label, "识别SocSci/Econ预印本");
+  assert.deepEqual(popup.children, [menuItem]);
+});
+
+test("startup adds plugin icon to the menu item", () => {
+  const { document, ui } = createFakeUI();
+
+  ui.startup();
+
+  const menuItem = document.getElementById(MENU_ID);
+  assert.equal(menuItem.attributes.class, "menuitem-iconic");
+  assert.match(menuItem.attributes.image, /^data:image\/png;base64,/);
+  assert.match(menuItem.attributes.style, /list-style-image: url\('data:image\/png;base64,/);
+  assert.doesNotMatch(menuItem.attributes.style, /background-image/);
 });
 
 test("single selected PDF attachment shows and enables menu item", () => {
@@ -235,9 +271,18 @@ test("successful recognition uses Zotero progress window instead of alert", asyn
 
   assert.deepEqual(alerts, []);
   assert.equal(progressWindows.length, 1);
-  assert.equal(progressWindows[0].headline, "NBER Zotero Plugin");
-  assert.match(progressWindows[0].description, /Created NBER preprint item 42/);
+  assert.equal(progressWindows[0].headline, "SocSci/Econ Preprint Recognizer");
+  assert.match(progressWindows[0].description, /Created preprint item 42/);
   assert.equal(progressWindows[0].shown, true);
+});
+
+test("successful recognition refreshes the selected item pane", async () => {
+  const selectedItem = pdfAttachment(42);
+  const { itemPaneRenders, ui } = createFakeUI([selectedItem]);
+
+  await ui.recognizeSelected();
+
+  assert.deepEqual(itemPaneRenders, [[42]]);
 });
 
 test("regular item recognition calls recognizer recognizeItem", async () => {
@@ -266,17 +311,17 @@ test("uses Simplified Chinese labels for zh-CN locale", async () => {
   await ui.recognizeSelected();
 
   const menuItem = document.getElementById(MENU_ID);
-  assert.equal(menuItem.attributes.label, "识别 NBER 工作论文");
-  assert.equal(progressWindows[0].headline, "NBER Zotero 插件");
-  assert.match(progressWindows[0].description, /已创建 NBER 预印本条目 43/);
+  assert.equal(menuItem.attributes.label, "识别SocSci/Econ预印本");
+  assert.equal(progressWindows[0].headline, "SocSci/Econ Preprint Recognizer");
+  assert.match(progressWindows[0].description, /已创建预印本条目 43/);
 });
 
 test("uses localized labels for supported non-English locales", () => {
   const cases = [
-    ["zh-TW", "識別 NBER 工作論文"],
-    ["fr-FR", "Reconnaître le document de travail NBER"],
-    ["es-ES", "Reconocer documento de trabajo de NBER"],
-    ["de-DE", "Recognize NBER Working Paper"]
+    ["zh-TW", "識別SocSci/Econ預印本"],
+    ["fr-FR", "Reconnaître le preprint SocSci/Econ"],
+    ["es-ES", "Reconocer preprint SocSci/Econ"],
+    ["de-DE", "Recognize SocSci/Econ Preprint"]
   ];
 
   for (const [locale, expectedLabel] of cases) {
