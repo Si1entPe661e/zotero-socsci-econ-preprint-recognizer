@@ -1,5 +1,25 @@
+# Build output
 dist/
-node_modules/
 *.xpi
+
+# Dependencies
+node_modules/
+
+# Logs and temporary files
 *.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# OS metadata
 .DS_Store
+Thumbs.db
+
+# Editor settings
+.idea/
+.vscode/
+
+# Coverage and test artifacts
+coverage/
+.nyc_output/
